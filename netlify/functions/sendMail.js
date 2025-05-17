@@ -3,17 +3,23 @@ const nodemailer = require('nodemailer');
 exports.handler = async (event) => {
     const { name, email, phone, message } = JSON.parse(event.body);
 
+    // ✅ Configure AOL SMTP server
     const transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.aol.com',
+        port: 587,
+        secure: false,
         auth: {
-            user: 'your-email@gmail.com',       // Replace with your Gmail address
-            pass: 'your-password'               // Replace with your Gmail password or App Password
+            user: process.env.EMAIL_USERNAME, // <-- Now using environment variable
+            pass: process.env.EMAIL_PASSWORD  // <-- Now using environment variable
         },
+        tls: {
+            rejectUnauthorized: false
+        }
     });
 
     const mailOptions = {
-        from: email,
-        to: 'your-email@gmail.com',            // Where you want to receive the form submissions
+        from: process.env.EMAIL_USERNAME,
+        to: process.env.EMAIL_USERNAME,   // <-- Also secured with environment variable
         subject: `Contact Form Submission from ${name}`,
         text: `Message from ${name} (${email}, ${phone}):\n\n${message}`,
     };
@@ -25,6 +31,7 @@ exports.handler = async (event) => {
             body: JSON.stringify({ message: 'Email sent successfully!' })
         };
     } catch (error) {
+        console.error(error);
         return {
             statusCode: 500,
             body: JSON.stringify({ message: 'Failed to send email.' })
